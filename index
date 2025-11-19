@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Backend Generator - Premium UI</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+  </style>
+</head>
+<body class="bg-[#0B0E13] text-white min-h-screen p-6 flex flex-col items-center">  <div class="max-w-2xl w-full text-center mt-6">
+    <h1 class="text-4xl font-bold">BACKEND GENERATOR</h1>
+    <p class="mt-1 text-blue-400 text-lg">Image Prompt Generator</p><div class="flex justify-center gap-4 mt-4">
+  <div class="w-10 h-10 bg-green-500 rounded-full"></div>
+  <div class="w-10 h-10 bg-pink-500 rounded-full"></div>
+  <div class="w-10 h-10 bg-white rounded-full"></div>
+</div>
+
+  </div>  <div class="glass max-w-2xl w-full p-6 mt-8 rounded-2xl">
+    <label class="block text-lg font-semibold mb-2">Upload Gambar</label>
+    <div id="dropzone" class="border-2 border-dashed border-gray-500 rounded-xl p-10 text-center cursor-pointer hover:bg-white/5 transition">
+      <p class="text-gray-300">Klik untuk mengunggah gambar</p>
+      <input id="imageInput" type="file" accept="image/*" class="hidden" />
+    </div><div class="mt-6">
+  <label class="block font-semibold mb-1">Rasio Gambar</label>
+  <select class="w-full p-3 rounded-lg bg-[#11141A] border border-gray-600">
+    <option>9:16 (Potret Penuh) - Default</option>
+    <option>1:1 (Persegi)</option>
+    <option>16:9 (Landscape)</option>
+  </select>
+</div>
+
+<div class="mt-6">
+  <label class="block font-semibold mb-1">Mode Output</label>
+  <select class="w-full p-3 rounded-lg bg-[#11141A] border border-gray-600">
+    <option>JSON (Bahasa Indonesia)</option>
+    <option>JSON (English)</option>
+    <option>Text Prompt Only</option>
+  </select>
+</div>
+
+<button id="analyzeBtn" class="w-full mt-6 bg-purple-600 hover:bg-purple-700 transition p-3 rounded-xl font-semibold">
+  Analisis Gambar & Buat Deskripsi
+</button>
+
+  </div>  <div class="glass max-w-2xl w-full p-6 mt-8 rounded-2xl">
+    <h2 class="text-xl font-bold mb-3">Output Prompt</h2>
+    <pre id="output" class="bg-black/50 p-4 rounded-lg text-green-400 min-h-[150px] whitespace-pre-wrap">Hasil prompt akan muncul di sini...</pre>
+    <button id="copyBtn" class="w-full mt-4 bg-purple-600 hover:bg-purple-700 p-3 rounded-xl font-semibold">Salin Prompt</button>
+  </div>  <script>
+    const dropzone = document.getElementById('dropzone');
+    const imageInput = document.getElementById('imageInput');
+    const output = document.getElementById('output');
+
+    dropzone.addEventListener('click', () => imageInput.click());
+
+    // ANALISIS GAMBAR MELALUI NETLIFY FUNCTION (API KEY AMAN)
+    document.getElementById('analyzeBtn').addEventListener('click', async () => {
+      output.textContent = "⏳ Menganalisis gambar...";
+
+      const file = imageInput.files[0];
+      if (!file) {
+        output.textContent = "❌ Tidak ada gambar yang diupload.";
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result.split(",")[1];
+
+        try {
+          const response = await fetch("/.netlify/functions/analyze-image", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: base64 })
+          });
+
+          const result = await response.json();
+          output.textContent = JSON.stringify(result, null, 2);
+        } catch (err) {
+          output.textContent = "❌ Terjadi kesalahan saat memproses gambar.";
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(output.textContent);
+      alert('Prompt disalin!');
+    });
+  </script></body>
+</html>
